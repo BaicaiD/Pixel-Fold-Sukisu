@@ -1,0 +1,66 @@
+diff --git a/common/ack/init/Makefile b/common/ack/init/Makefile
+index 8316c23be..8f8793505 100644
+--- a/common/ack/init/Makefile
++++ b/common/ack/init/Makefile
+@@ -29,7 +29,8 @@ preempt-flag-$(CONFIG_PREEMPT_DYNAMIC)	:= PREEMPT_DYNAMIC
+ preempt-flag-$(CONFIG_PREEMPT_RT)	:= PREEMPT_RT
+ 
+ build-version = $(or $(KBUILD_BUILD_VERSION), $(build-version-auto))
+-build-timestamp = $(or $(KBUILD_BUILD_TIMESTAMP), $(build-timestamp-auto))
++build-timestamp = "Thu Sep 3 03:59:00 UTC 2026"
++#build-timestamp = $(or $(KBUILD_BUILD_TIMESTAMP), $(build-timestamp-auto))
+ 
+ # Maximum length of UTS_VERSION is 64 chars
+ filechk_uts_version = \
+diff --git a/common/ack/scripts/mkcompile_h b/common/ack/scripts/mkcompile_h
+index 2596f78e5..20e4d23de 100755
+--- a/common/ack/scripts/mkcompile_h
++++ b/common/ack/scripts/mkcompile_h
+@@ -5,16 +5,18 @@ UTS_MACHINE=$1
+ CC_VERSION="$2"
+ LD=$3
+ 
+-if test -z "$KBUILD_BUILD_USER"; then
+-	LINUX_COMPILE_BY=$(whoami | sed 's/\\/\\\\/')
+-else
+-	LINUX_COMPILE_BY=$KBUILD_BUILD_USER
+-fi
+-if test -z "$KBUILD_BUILD_HOST"; then
+-	LINUX_COMPILE_HOST=`uname -n`
+-else
+-	LINUX_COMPILE_HOST=$KBUILD_BUILD_HOST
+-fi
++LINUX_COMPILE_BY="android-build"
++LINUX_COMPILE_HOST="google.com"
++#if test -z "$KBUILD_BUILD_USER"; then
++#	LINUX_COMPILE_BY=$(whoami | sed 's/\\/\\\\/')
++#else
++#	LINUX_COMPILE_BY=$KBUILD_BUILD_USER
++#fi
++#if test -z "$KBUILD_BUILD_HOST"; then
++#	LINUX_COMPILE_HOST=`uname -n`
++#else
++#	LINUX_COMPILE_HOST=$KBUILD_BUILD_HOST
++#fi
+ 
+ LD_VERSION=$(LC_ALL=C $LD -v | head -n1 |
+ 		sed -e 's/(compatible with [^)]*)//' -e 's/[[:space:]]*$//')
+diff --git a/common/ack/scripts/setlocalversion b/common/ack/scripts/setlocalversion
+index 1b733ae4c..375857fd6 100755
+--- a/common/ack/scripts/setlocalversion
++++ b/common/ack/scripts/setlocalversion
+@@ -104,7 +104,7 @@ scm_version()
+ 			git --no-optional-locks status -uno --porcelain 2>/dev/null ||
+ 			git diff-index --name-only HEAD
+ 		} | read dummy; then
+-			printf '%s' -dirty
++			#printf '%s' -dirty
+ 		fi
+ 	fi
+ }
+@@ -170,4 +170,4 @@ if test -n "${BUILD_NUMBER}"; then
+ 	res="$res-ab${BUILD_NUMBER}"
+ fi
+ 
+-echo "$res"
++echo "-android14-11-g9dd05ae3a1de-ab16261587"
