@@ -1,0 +1,53 @@
+#SukiSU-Ultra 版本元数据修复 / Version Metadata Fix
+#问题 / Symptom
+#Fixed an issue where the sandbox mechanism failed to retrieve version information via Git.
+#构建日志出现类似 v4.2.1-SukiSU-Ultra-unknown@unknown 的版本信息，无法获取到源码的 Git commit/branch 元数据，导致最后构建的sukisu版本异常。
+#处理方式 / Solution
+#创建 tools/gen_ksu_version.sh，在 Bazel 构建前读取 KernelSU 仓库的 tag、commit、branch 和提交计数，生成 common/ack/ksu_version.env。
+
+#关键脚本逻辑 / Key script logic
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="$ROOT/common/ack/KernelSU"
+OUT="$ROOT/common/ack/ksu_version.env"
+
+BASE=40000
+OFFSET=2815
+SHA="$(git -C "$REPO" rev-parse --short=8 HEAD)"
+BRANCH="$(git -C "$REPO" branch --show-current)"
+TAG="$(git -C "$REPO" describe --tags --abbrev=0 | sed 's/^v//')"
+COUNT="$(git -C "$REPO" rev-list --count main)"
+VERSION=$((BASE + COUNT - OFFSET))
+
+{
+  printf 'KSU_VERSION=%s\n' "$VERSION"
+  printf 'KSU_VERSION_FULL=v%s-%s@%s\n' "$TAG" "$SHA" "$BRANCH"
+} > "$OUT.tmp"
+mv "$OUT.tmp" "$OUT"
+
+#在 tools/build_dist.sh 的 Bazel 构建之前，对 felix 调用生成脚本：
+
+if [[ "${DEVICE}" == "felix" ]]; then
+  "${WORKSPACE_DIR}/tools/gen_ksu_version.sh"
+fi
+
+#在 common/ack/KernelSU/kernel/Kbuild 中 include 生成文件，并保留编译参数：
+
+KSU_VERSION_FILE := $(srctree)/ksu_version.env
+ifneq ($(wildcard $(KSU_VERSION_FILE)),)
+include $(KSU_VERSION_FILE)
+endif
+
+KSU_VERSION ?= 41000
+KSU_VERSION_FULL ?= v4.2.1-SukiSU-Ultra-unknown@unknown
+
+ccflags-y += -DKSU_VERSION=$(KSU_VERSION)
+ccflags-y += -DKSU_VERSION_FULL=\"$(KSU_VERSION_FULL)\"
+
+#生成结果 / Generated result: KSU_VERSION=41050；KSU_VERSION_FULL=v4.2.1-r1-3c6ecb97@main。构建日志中多处显示：SukiSU-Ultra version: 41050 [v4.2.1-r1-3c6ecb97@main]。
+
+#验证命令 / Verification
+
+grep -n 'SukiSU-Ultra version' /tmp/felix-ksu-build.log
+
+
