@@ -27,6 +27,30 @@
 - Generated version metadata before the Bazel build.
 - Verified that the build completed successfully.
 - Used MagiskBoot to unpack and repack the boot image.
+## GKI ABI Export Files
+
+For the required kernel configuration, the following GKI ABI protected export files must be present but empty:
+
+- `common/android/abi_gki_protected_exports_aarch64`
+- `common/android/abi_gki_protected_exports_x86_64`
+
+To empty both files without deleting them, run the following commands from the kernel repository root:
+
+```bash
+truncate -s 0 common/android/abi_gki_protected_exports_aarch64
+truncate -s 0 common/android/abi_gki_protected_exports_x86_64
+```
+
+Verify that both files are empty:
+
+```bash
+ls -l common/android/abi_gki_protected_exports_aarch64 \
+      common/android/abi_gki_protected_exports_x86_64
+```
+
+Both files should report a size of `0` bytes.
+
+**Note:** If these paths do not exist in your source tree, locate the files first and adjust the paths accordingly. Emptying these files changes the ABI export data and may affect kernel build compatibility or module loading. Use only with a compatible kernel source and build configuration.
 
 ## Important Notes
 
